@@ -25,15 +25,14 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: ${{ env.ARTIFACT_NAME }}-${{ github.sha }}
-          path: ./artifacts
 
       - name: Verify Artifact
         run: |
           echo "Verifying deployment artifact..."
-          ls -la ./artifacts/
-          if [ -f "./artifacts/aspnet-app-${{ github.sha }}.zip" ]; then
+          ls -la ./
+          if [ -f "aspnet-app-${{ github.sha }}.zip" ]; then
             echo "Artifact found and ready for deployment"
-            unzip -l "./artifacts/aspnet-app-${{ github.sha }}.zip" | head -10
+            unzip -l "aspnet-app-${{ github.sha }}.zip" | head -10
           else
             echo "Artifact not found!"
             exit 1
