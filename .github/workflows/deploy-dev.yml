@@ -1,0 +1,44 @@
+name: Deploy Dev
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: ["completed"]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  deploy:
+    name: Deploy to Dev (simulate)
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      (
+        github.event.workflow_run.head_branch == 'dev' ||
+        startsWith(github.event.workflow_run.head_branch, 'release/')
+      )
+    steps:
+      - name: Download artifact from CI run
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: ci.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          name: webapp
+          path: ./artifact
+
+      - name: List downloaded files
+        run: ls -la ./artifact
+
+      - name: Simulate Deploy to IIS (Dev)
+        env:
+          IIS_HOST: "secrets.IIS_HOST"
+          IIS_USER: "secrets.IIS_USER"
+          IIS_PASSWORD: "secrets.IIS_PASSWORD"
+          IIS_SITE_NAME: "secrets.IIS_SITE_NAME"
+        run: |
+          echo "Environment: DEV"
+          echo "Connecting to host: ${IIS_HOST} with user: ${IIS_USER}"
+          echo "Artifact: $(ls ./artifact)"
+          echo "Deploy executado com sucesso para dev"

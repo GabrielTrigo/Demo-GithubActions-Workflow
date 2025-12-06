@@ -1,0 +1,60 @@
+name: Deploy Homolog
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: ["completed"]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  precheck:
+    name: Gate - Verificar sucesso do Deploy Dev
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Verificar se Deploy Dev concluiu com sucesso para o mesmo head_sha
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          echo "Checando deploy-dev para HEAD_SHA=${HEAD_SHA}"
+          # Busca runs do workflow Deploy Dev com o mesmo head_sha e evento workflow_run
+          # Nota: esta checagem é uma heurística; em cenários reais, usaríamos um ID correlacionado ou repository_dispatch.
+          RUNS=$(gh run list --workflow "Deploy Dev" --json status,headSha,conclusion,event,createdAt --limit 50)
+          MATCH=$(echo "$RUNS" | jq -r --arg sha "$HEAD_SHA" '.[] | select(.headSha==$sha and .event=="workflow_run") | .conclusion' | head -n1)
+          if [[ "$MATCH" != "success" ]]; then
+            echo "Deploy Dev ainda não marcou success para esta execução. Abortando promoção para homolog."
+            exit 1
+          fi
+          echo "Gate aprovado: Deploy Dev success."
+
+  deploy:
+    name: Deploy to Homolog (simulate)
+    runs-on: ubuntu-latest
+    needs: precheck
+    steps:
+      - name: Download artifact from CI run
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: ci.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          name: webapp
+          path: ./artifact
+
+      - name: List downloaded files
+        run: ls -la ./artifact
+
+      - name: Simulate Deploy to IIS (Homolog)
+        env:
+          IIS_HOST: "secrets.IIS_HOST"
+          IIS_USER: "secrets.IIS_USER"
+          IIS_PASSWORD: "secrets.IIS_PASSWORD"
+          IIS_SITE_NAME: "secrets.IIS_SITE_NAME"
+        run: |
+          echo "Environment: HOMOLOG"
+          echo "Connecting to host: ${IIS_HOST} with user: ${IIS_USER}"
+          echo "Artifact: $(ls ./artifact)"
+          echo "Deploy executado com sucesso para homolog"
