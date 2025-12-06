@@ -71,7 +71,7 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: ${{ env.ARTIFACT_NAME }}-${{ github.sha }}
-          path: aspnet-app-${{ github.sha }}.zip
+          path: ./artifacts/aspnet-app-${{ github.sha }}.zip
           retention-days: 30
 
       - name: CI Summary
