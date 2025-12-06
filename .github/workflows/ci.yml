@@ -3,12 +3,12 @@ name: CI
 on:
   pull_request:
     branches:
-      - devlop
+      - develop
       - main
       - "release/*"
   push:
     branches:
-      - devlop
+      - develop
       - main
       - "release/*"
     tags:
@@ -108,9 +108,9 @@ jobs:
           if [[ "${REF_TYPE}" == "tag" ]]; then
             SEMVER="${REF_NAME#v}"
             CHANNEL="release"
-          elif [[ "${REF_NAME}" == "devlop" ]]; then
-            SEMVER="${MAJOR}.${MINOR}.${PATCH}-devlop.${GITHUB_RUN_NUMBER}"
-            CHANNEL="devlop"
+          elif [[ "${REF_NAME}" == "develop" ]]; then
+            SEMVER="${MAJOR}.${MINOR}.${PATCH}-develop.${GITHUB_RUN_NUMBER}"
+            CHANNEL="develop"
           elif [[ "${REF_NAME}" == "main" ]]; then
             SEMVER="${MAJOR}.${MINOR}.$((PATCH+1))"
             CHANNEL="release"
