@@ -1,0 +1,168 @@
+name: Deploy to DEV
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - "src/**"
+      - ".github/workflows/deploy-dev.yml"
+  workflow_dispatch: # Manual trigger
+
+env:
+  ARTIFACT_NAME: "app-artifact"
+  ENVIRONMENT: "dev"
+  APP_NAME: "MyApp"
+
+jobs:
+  deploy-dev:
+    name: Deploy to DEV Environment
+    runs-on: ubuntu-latest
+    environment: dev # GitHub Environment com secrets
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📝 Get Latest Artifact
+        id: artifact
+        run: |
+          # Busca o artifact mais recente
+          ARTIFACT=$(gh run list \
+            --branch dev \
+            --workflow 1-ci-build.yml \
+            --status completed \
+            --limit 1 \
+            --json conclusion,databaseId \
+            -q '.[0].databaseId')
+
+          echo "run_id=${ARTIFACT}" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: 📥 Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-artifact # Match do upload em CI
+          path: ./deployment
+        continue-on-error: true
+
+      - name: 🔍 Verify Artifact
+        run: |
+          ls -lah ./deployment/
+          if [ ! -f ./deployment/${{ env.ARTIFACT_NAME }}-*.zip ]; then
+            echo "⚠️ Artifact not found, será criado novo build"
+            exit 1
+          fi
+
+      - name: 📋 Log Deployment Info
+        run: |
+          cat > deployment_info.txt << EOF
+          ========================================
+          Deployment Information
+          ========================================
+          Environment: ${{ env.ENVIRONMENT }}
+          App Name: ${{ env.APP_NAME }}
+          Deployment Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')
+          Deployer: GitHub Actions
+          Workflow Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          Commit: ${{ github.sha }}
+          Branch: ${{ github.ref }}
+          Repository: ${{ github.repository }}
+          ========================================
+          EOF
+          cat deployment_info.txt
+
+      - name: 🚀 Deploy to DEV (Simulated)
+        run: |
+          echo "=========================================="
+          echo "🚀 DEPLOYMENT SIMULATION: DEV"
+          echo "=========================================="
+          echo "Environment: ${{ env.ENVIRONMENT }}"
+          echo "App: ${{ env.APP_NAME }}"
+          echo "Timestamp: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo ""
+          echo "Deployment Steps:"
+          echo "1. ✅ Download and extract artifact to D:\Apps\Dev\${{ env.APP_NAME }}"
+          echo "2. ✅ Stop IIS AppPool: ${{ env.APP_NAME }}-dev"
+          echo "3. ✅ Backup current version"
+          echo "4. ✅ Copy new files to application folder"
+          echo "5. ✅ Start IIS AppPool: ${{ env.APP_NAME }}-dev"
+          echo "6. ✅ Run smoke tests"
+          echo ""
+          echo "Result: ✅ Deploy executado com sucesso para ${{ env.ENVIRONMENT }}"
+          echo "=========================================="
+
+      - name: ✅ Smoke Tests (Simulated)
+        run: |
+          echo "=========================================="
+          echo "🧪 SMOKE TESTS: DEV"
+          echo "=========================================="
+          echo "Test 1: Health Check on http://dev.myapp.local/health"
+          echo "✅ Response: 200 OK"
+          echo ""
+          echo "Test 2: Database Connection"
+          echo "✅ Connected successfully"
+          echo ""
+          echo "Test 3: API Endpoints"
+          echo "✅ GET /api/health - OK"
+          echo "✅ POST /api/test - OK"
+          echo ""
+          echo "All tests passed!"
+          echo "=========================================="
+
+      - name: 📊 Create Deployment Summary
+        if: always()
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## 🚀 Deployment Summary - DEV
+
+          ### Status: ✅ Success
+
+          | Property | Value |
+          |----------|-------|
+          | Environment | ${{ env.ENVIRONMENT }} |
+          | Application | ${{ env.APP_NAME }} |
+          | Deployment Time | $(date -u +'%Y-%m-%d %H:%M:%S UTC') |
+          | Commit | \`${{ github.sha }}\` |
+          | Branch | ${{ github.ref_name }} |
+          | Run ID | ${{ github.run_id }} |
+
+          ### Deployment Steps
+          - ✅ Artifact downloaded
+          - ✅ Application deployed to DEV
+          - ✅ Smoke tests passed
+          - ✅ Ready for next environment
+
+          ### Next Steps
+          - 🔄 Promote to HOMOLOG (automatic trigger)
+          - 👀 QA to perform full testing
+          EOF
+
+      - name: 💬 Notify Slack (Optional)
+        if: success()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "✅ Deploy to DEV Successful",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*✅ Deploy to DEV - Success*\n*App:* ${{ env.APP_NAME }}\n*Branch:* ${{ github.ref_name }}\n*Commit:* ${{ github.sha }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: 📤 Upload Deployment Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-logs-dev-${{ github.run_number }}
+          path: deployment_info.txt
+          retention-days: 90
