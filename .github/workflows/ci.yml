@@ -1,4 +1,4 @@
-name: 🔨 CI - Build & Test
+name: PR - CI (build & tests & quality)
 
 on:
   pull_request:
@@ -53,7 +53,7 @@ jobs:
 
       - name: Publish Application
         run: |
-          dotnet publish src/MeuProjeto.Api/MeuProjeto.Api.csproj \
+          dotnet publish \
             --configuration Release \
             --output ./publish \
             --no-restore \
