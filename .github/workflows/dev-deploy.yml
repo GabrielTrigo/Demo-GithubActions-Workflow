@@ -20,12 +20,12 @@ jobs:
       artifact-name: ${{ steps.set-artifact.outputs.artifact }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup .NET 8 SDK
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "8.0.x"
 
@@ -44,7 +44,7 @@ jobs:
         run: echo "::set-output name=artifact::${{ env.ARTIFACT_NAME }}"
 
       - name: Upload artifact to Actions (short-term)
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: ${{ env.ARTIFACT_NAME }}
@@ -57,10 +57,10 @@ jobs:
     environment: dev
     steps:
       - name: Checkout (to show context)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download artifact from previous job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: ${{ needs.build.outputs['artifact-name'] }}
           path: ./artifact
