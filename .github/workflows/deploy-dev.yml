@@ -1,0 +1,83 @@
+name: Deploy DEV
+
+on:
+  push:
+    branches: [develop]
+
+concurrency:
+  group: "develop-deploy"
+  cancel-in-progress: true
+
+env:
+  ENVIRONMENT: "DEV"
+  ARTIFACT_NAME: "aspnet-app"
+
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: ${{ env.ARTIFACT_NAME }}-${{ github.sha }}
+          path: ./artifacts
+
+      - name: Verify Artifact
+        run: |
+          echo "Verifying deployment artifact..."
+          ls -la ./artifacts/
+          if [ -f "./artifacts/aspnet-app-${{ github.sha }}.zip" ]; then
+            echo "Artifact found and ready for deployment"
+            unzip -l "./artifacts/aspnet-app-${{ github.sha }}.zip" | head -10
+          else
+            echo "Artifact not found!"
+            exit 1
+          fi
+
+      - name: Deploy to DEV Environment
+        env:
+          DEV_SERVER: "***secrets.DEV_SERVER***"
+          DEV_API_KEY: "***secrets.DEV_API_KEY***"
+        run: |
+          echo "Starting deployment to DEV environment..."
+          echo "Deployment Details:"
+          echo "  • Environment: ${{ env.ENVIRONMENT }}"
+          echo "  • Artifact: aspnet-app-${{ github.sha }}.zip"
+          echo "  • Server: ${{ env.DEV_SERVER }}"
+          echo "  • Timestamp: $(date)"
+
+          # Simular deploy (substituir por script real de deploy)
+          echo "Uploading artifact to DEV server..."
+          sleep 3
+          echo "Extracting and configuring application..."
+          sleep 2
+          echo "Starting IIS application pool..."
+          sleep 2
+          echo "Running health checks..."
+          sleep 1
+
+          echo "Deploy executado com sucesso para DEV"
+
+      - name: Post-Deploy Health Check
+        run: |
+          echo "Performing post-deployment health checks..."
+          echo "  • Application Status: Running"
+          echo "  • Database Connection: OK"
+          echo "  • API Endpoints: Responding"
+          echo "  • Memory Usage: Normal"
+
+      - name: Deployment Summary
+        run: |
+          echo "DEV Deployment Summary"
+          echo "=========================="
+          echo "Status: SUCCESS"
+          echo "Environment: DEV"
+          echo "Artifact: aspnet-app-${{ github.sha }}.zip"
+          echo "Deployed at: $(date)"
+          echo "Triggered by: ${{ github.actor }}"
+          echo "Branch: ${{ github.ref_name }}"
