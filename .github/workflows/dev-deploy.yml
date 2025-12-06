@@ -1,0 +1,72 @@
+name: "Dev - Build and Deploy"
+
+on:
+  push:
+    branches:
+      - develop
+
+concurrency:
+  group: "develop-deploy"
+  cancel-in-progress: true
+
+env:
+  ARTIFACT_NAME: "app-develop-${{ github.sha }}.zip"
+
+jobs:
+  build:
+    name: Build (develop)
+    runs-on: windows-latest
+    outputs:
+      artifact-name: ${{ steps.set-artifact.outputs.artifact }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet publish -c Release -o ./publish
+
+      - name: Package artifact
+        run: |
+          powershell -Command "Compress-Archive -Path ./publish/* -DestinationPath $env:ARTIFACT_NAME -Force"
+
+      - name: Set artifact output
+        id: set-artifact
+        run: echo "::set-output name=artifact::${{ env.ARTIFACT_NAME }}"
+
+      - name: Upload artifact to Actions (short-term)
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ${{ env.ARTIFACT_NAME }}
+          retention-days: 30
+
+  deploy-dev:
+    name: Deploy -> DEV (simulado)
+    needs: build
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Checkout (to show context)
+        uses: actions/checkout@v4
+
+      - name: Download artifact from previous job
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs['artifact-name'] }}
+          path: ./artifact
+
+      - name: Simulate Deploy to DEV (log)
+        run: |
+          echo "-------- Simulação de deploy para ENV: DEV --------"
+          echo "Artifact usado: ${{ needs.build.outputs['artifact-name'] }}"
+          echo "Deploy executado com sucesso para DEV"
