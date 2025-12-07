@@ -37,7 +37,7 @@ jobs:
       - name: 🧪 Run Tests
         run: |
           echo "🧪 Running unit tests..."
-          dotnet test --configuration Release --no-build --verbosity minimal
+          dotnet test ./src/Api/Api.csproj --configuration Release --no-build --verbosity minimal
 
       - name: ✅ CI Summary
         run: |
