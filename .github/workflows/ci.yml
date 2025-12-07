@@ -27,23 +27,17 @@ jobs:
       - name: 🔄 Restore Dependencies
         run: |
           echo "🔄 Restoring NuGet packages..."
-          dotnet restore
+          dotnet restore ./src/Api/Api.csproj
 
       - name: 🏗️ Build Application
         run: |
           echo "🏗️ Building application..."
-          dotnet build --configuration Release --no-restore
+          dotnet build ./src/Api/Api.csproj --configuration Release --no-restore
 
       - name: 🧪 Run Tests
         run: |
           echo "🧪 Running unit tests..."
           dotnet test --configuration Release --no-build --verbosity minimal
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-build
-          path: dist/**
 
       - name: ✅ CI Summary
         run: |
