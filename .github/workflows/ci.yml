@@ -5,8 +5,6 @@ on:
     branches:
       - develop
     types: [opened, synchronize, reopened, ready_for_review]
-  push:
-    branches: [develop, "release/*"]
 
 concurrency:
   group: "pr-ci-${{ github.ref }}"
