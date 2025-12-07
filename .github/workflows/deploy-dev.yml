@@ -29,7 +29,7 @@ jobs:
       - name: Verify Artifact
         run: |
           echo "Verifying deployment artifact..."
-          ls -la ./
+          ls -la .
           if [ -f "aspnet-app-${{ github.sha }}.zip" ]; then
             echo "Artifact found and ready for deployment"
             unzip -l "aspnet-app-${{ github.sha }}.zip" | head -10
