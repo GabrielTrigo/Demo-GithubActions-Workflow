@@ -1,12 +1,11 @@
-name: 🔨 CI - Build & Test
+name: CI - Build & Test
 
 on:
   pull_request:
-    branches:
-      - develop
-      - release/*
-      - main
+    branches: ["dev", "main", "release/*"]
     types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: ["dev", "main", "release/*"]
 
 concurrency:
   group: "pr-ci-${{ github.ref }}"
@@ -39,6 +38,12 @@ jobs:
         run: |
           echo "🧪 Running unit tests..."
           dotnet test --configuration Release --no-build --verbosity minimal
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-build
+          path: dist/**
 
       - name: ✅ CI Summary
         run: |
