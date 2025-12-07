@@ -4,12 +4,19 @@ on:
   push:
     tags: ["v*.*.*"]
 
+concurrency:
+  group: "pr-ci-${{ github.ref }}"
+  cancel-in-progress: true
+
 jobs:
   deploy-prod:
     runs-on: ubuntu-latest
-    environment: prod # Requer aprovação manual
+    environment: prod
 
     steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
       - name: 🏷️ Get Tag Info
         id: tag
         run: |
@@ -18,12 +25,17 @@ jobs:
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
-      - name: 🔍 Find Artifact
+      - name: 🎯 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: 🏗️ Build & Publish
         run: |
-          echo "🔍 Looking for artifact from release branch..."
-          # Em produção real, aqui você buscaria o artifact correto
-          # Para este exemplo, vamos simular
-          echo "✅ Found artifact for version ${{ steps.tag.outputs.version }}"
+          dotnet restore
+          dotnet build --configuration Release --no-restore
+          dotnet test --configuration Release --no-build
+          dotnet publish --configuration Release --output ./publish --no-build
 
       - name: 🏭 Deploy to PRODUCTION
         env:
