@@ -1,13 +1,13 @@
-name: 🌿 Deploy DEV
+name: 🧪 Deploy HOMOLOG
 
 on:
   push:
-    branches: [develop]
+    branches: ["release/*"]
 
 jobs:
-  deploy-dev:
+  deploy-homolog:
     runs-on: ubuntu-latest
-    environment: dev
+    environment: homolog
 
     steps:
       - name: 📦 Download Artifact
@@ -16,14 +16,14 @@ jobs:
           name: app-${{ github.sha }}
           path: ./artifacts
 
-      - name: 🚀 Deploy to DEV
+      - name: 🧪 Deploy to HOMOLOG
         env:
-          DEV_SERVER: "env.DEV_SERVER"
+          HOMOLOG_SERVER: "secrets.HOMOLOG_SERVER"
         run: |
-          echo "🚀 Deploying to DEV..."
+          echo "🧪 Deploying to HOMOLOG..."
           echo "📦 Artifact: app-${{ github.sha }}.zip"
-          echo "🌐 Server: ${{ env.DEV_SERVER }}"
+          echo "🌐 Server: ${{ env.HOMOLOG_SERVER }}"
           echo "⏰ Time: $(date)"
 
           # Simular deploy
-          echo "✅ Deploy executado com sucesso para DEV"
+          echo "✅ Deploy executado com sucesso para HOMOLOG"

@@ -1,84 +1,44 @@
-name: PR - CI (build & tests & quality)
+name: 🔨 CI - Build & Test
 
 on:
   pull_request:
-    branches:
-      - develop
-    types: [opened, synchronize, reopened, ready_for_review]
-
-concurrency:
-  group: "pr-ci-${{ github.ref }}"
-  cancel-in-progress: true
-
-env:
-  DOTNET_VERSION: "8.0.x"
-  ARTIFACT_NAME: "aspnet-app"
+    branches: [develop]
+  push:
+    branches: [develop, "release/*"]
 
 jobs:
   ci:
-    name: "Build, Test & Quality (PR)"
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+      - name: 🎯 Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-version: "8.0.x"
 
-      - name: Cache NuGet packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-
-      - name: Restore Dependencies
+      - name: 🔄 Restore
         run: dotnet restore
 
-      - name: Build Application
-        run: |
-          dotnet build --configuration Release --no-restore
-          echo "✅ Build completed successfully"
+      - name: 🏗️ Build
+        run: dotnet build --configuration Release --no-restore
 
-      - name: Run Unit Tests
-        run: |
-          dotnet test --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
-          echo "✅ All tests passed"
+      - name: 🧪 Test
+        run: dotnet test --configuration Release --no-build
 
-      - name: Code Coverage Report
-        run: |
-          echo "Code coverage analysis completed"
-          # Aqui você pode adicionar ferramentas como Coverlet, SonarQube, etc.
+      - name: 🚀 Publish
+        run: dotnet publish --configuration Release --output ./publish --no-build
 
-      - name: Publish Application
-        run: |
-          dotnet publish \
-            --configuration Release \
-            --output ./publish \
-            --no-restore \
-            --no-build
-
-      - name: Create Deployment Artifact
+      - name: 📦 Create Artifact
         run: |
           cd publish
-          zip -r ../aspnet-app-${{ github.sha }}.zip .
-          cd ..
-          echo "Artifact created: aspnet-app-${{ github.sha }}.zip"
-          ls -la *.zip
+          zip -r ../app-${{ github.sha }}.zip .
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v5
+      - name: 💾 Upload Artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.ARTIFACT_NAME }}-${{ github.sha }}
-          path: aspnet-app-${{ github.sha }}.zip
+          name: app-${{ github.sha }}
+          path: app-${{ github.sha }}.zip
           retention-days: 30
-
-      - name: CI Summary
-        run: |
-          echo "CI Pipeline completed successfully!"
-          echo "Summary:"
-          echo "  • Build: Success"
-          echo "  • Tests: All Passed"
-          echo "  • Artifact: Created and Uploaded"
-          echo "  • SHA: ${{ github.sha }}"
