@@ -2,9 +2,15 @@ name: 🔨 CI - Build & Test
 
 on:
   pull_request:
-    branches: [develop]
+    branches:
+      - develop
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [develop, "release/*"]
+
+concurrency:
+  group: "pr-ci-${{ github.ref }}"
+  cancel-in-progress: true
 
 jobs:
   ci:
@@ -19,26 +25,25 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
-      - name: 🔄 Restore
-        run: dotnet restore
-
-      - name: 🏗️ Build
-        run: dotnet build --configuration Release --no-restore
-
-      - name: 🧪 Test
-        run: dotnet test --configuration Release --no-build
-
-      - name: 🚀 Publish
-        run: dotnet publish --configuration Release --output ./publish --no-build
-
-      - name: 📦 Create Artifact
+      - name: 🔄 Restore Dependencies
         run: |
-          cd publish
-          zip -r ../app-${{ github.sha }}.zip .
+          echo "🔄 Restoring NuGet packages..."
+          dotnet restore
 
-      - name: 💾 Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-${{ github.sha }}
-          path: app-${{ github.sha }}.zip
-          retention-days: 30
+      - name: 🏗️ Build Application
+        run: |
+          echo "🏗️ Building application..."
+          dotnet build --configuration Release --no-restore
+
+      - name: 🧪 Run Tests
+        run: |
+          echo "🧪 Running unit tests..."
+          dotnet test --configuration Release --no-build --verbosity minimal
+
+      - name: ✅ CI Summary
+        run: |
+          echo "✅ CI Pipeline completed successfully!"
+          echo "📋 Summary:"
+          echo "  • Build: ✅ Success"
+          echo "  • Tests: ✅ All Passed"
+          echo "  • Ready for deployment"

@@ -4,24 +4,37 @@ on:
   push:
     branches: [develop]
 
+concurrency:
+  group: "pr-ci-${{ github.ref }}"
+  cancel-in-progress: true
+
 jobs:
   deploy-dev:
     runs-on: ubuntu-latest
     environment: dev
 
     steps:
-      - name: 📦 Download Artifact
-        uses: actions/download-artifact@v4
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🎯 Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          name: app-${{ github.sha }}
-          path: ./artifacts
+          dotnet-version: "8.0.x"
+
+      - name: 🏗️ Build & Publish
+        run: |
+          dotnet restore
+          dotnet build --configuration Release --no-restore
+          dotnet test --configuration Release --no-build
+          dotnet publish --configuration Release --output ./publish --no-build
 
       - name: 🚀 Deploy to DEV
         env:
-          DEV_SERVER: "env.DEV_SERVER"
+          DEV_SERVER: "secrets.DEV_SERVER"
         run: |
           echo "🚀 Deploying to DEV..."
-          echo "📦 Artifact: app-${{ github.sha }}.zip"
+          echo "📦 Fresh build for commit: ${{ github.sha }}"
           echo "🌐 Server: ${{ env.DEV_SERVER }}"
           echo "⏰ Time: $(date)"
 
