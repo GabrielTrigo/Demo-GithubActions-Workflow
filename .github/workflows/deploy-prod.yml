@@ -1,0 +1,48 @@
+name: 🏭 Deploy PRODUÇÃO
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    environment: prod # Requer aprovação manual
+
+    steps:
+      - name: 🏷️ Get Tag Info
+        id: tag
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG#v}
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: 🔍 Find Artifact
+        run: |
+          echo "🔍 Looking for artifact from release branch..."
+          # Em produção real, aqui você buscaria o artifact correto
+          # Para este exemplo, vamos simular
+          echo "✅ Found artifact for version ${{ steps.tag.outputs.version }}"
+
+      - name: 🏭 Deploy to PRODUCTION
+        env:
+          PROD_SERVER: "secrets.PROD_SERVER"
+        run: |
+          echo "🏭 DEPLOYING TO PRODUCTION..."
+          echo "🏷️ Tag: ${{ steps.tag.outputs.tag }}"
+          echo "📋 Version: ${{ steps.tag.outputs.version }}"
+          echo "🌐 Server: ${{ env.PROD_SERVER }}"
+          echo "👤 Authorized by: ${{ github.actor }}"
+          echo "⏰ Time: $(date)"
+
+          # Simular deploy de produção
+          echo "🛑 Stopping services..."
+          sleep 2
+          echo "📤 Uploading new version..."
+          sleep 3
+          echo "🌐 Starting services..."
+          sleep 2
+
+          echo "✅ Deploy executado com sucesso para PRODUÇÃO"
+          echo "🎉 Version ${{ steps.tag.outputs.version }} is LIVE!"
