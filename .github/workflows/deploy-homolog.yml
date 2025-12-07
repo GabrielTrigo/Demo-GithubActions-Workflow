@@ -3,9 +3,10 @@ name: 🧪 Deploy HOMOLOG
 on:
   push:
     branches: ["release/*"]
+  workflow_dispatch:
 
 concurrency:
-  group: "pr-ci-${{ github.ref }}"
+  group: "deploy-homolog-${{ github.ref }}"
   cancel-in-progress: true
 
 jobs:
