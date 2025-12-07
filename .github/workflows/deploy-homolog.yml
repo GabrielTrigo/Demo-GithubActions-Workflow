@@ -1,0 +1,43 @@
+name: 🧪 Deploy HOMOLOG
+
+on:
+  push:
+    branches: ["release/*"]
+  workflow_dispatch:
+
+concurrency:
+  group: "deploy-homolog-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  deploy-homolog:
+    runs-on: ubuntu-latest
+    environment: homolog
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🎯 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: 🏗️ Build & Publish
+        run: |
+          dotnet restore
+          dotnet build --configuration Release --no-restore
+          dotnet test --configuration Release --no-build
+          dotnet publish --configuration Release --output ./publish --no-build
+
+      - name: 🧪 Deploy to HOMOLOG
+        env:
+          HOMOLOG_SERVER: "secrets.HOMOLOG_SERVER"
+        run: |
+          echo "🧪 Deploying to HOMOLOG..."
+          echo "📦 Fresh build for commit: ${{ github.sha }}"
+          echo "🌐 Server: ${{ env.HOMOLOG_SERVER }}"
+          echo "⏰ Time: $(date)"
+
+          # Simular deploy
+          echo "✅ Deploy executado com sucesso para HOMOLOG"

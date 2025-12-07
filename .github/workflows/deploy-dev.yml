@@ -1,0 +1,43 @@
+name: 🌿 Deploy DEV
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+concurrency:
+  group: "deploy-dev-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🎯 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: 🏗️ Build & Publish
+        run: |
+          dotnet restore
+          dotnet build --configuration Release --no-restore
+          dotnet test --configuration Release --no-build
+          dotnet publish --configuration Release --output ./publish --no-build
+
+      - name: 🚀 Deploy to DEV
+        env:
+          DEV_SERVER: "secrets.DEV_SERVER"
+        run: |
+          echo "🚀 Deploying to DEV..."
+          echo "📦 Fresh build for commit: ${{ github.sha }}"
+          echo "🌐 Server: ${{ env.DEV_SERVER }}"
+          echo "⏰ Time: $(date)"
+
+          # Simular deploy
+          echo "✅ Deploy executado com sucesso para DEV"

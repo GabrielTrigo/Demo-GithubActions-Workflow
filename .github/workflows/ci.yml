@@ -1,0 +1,49 @@
+name: 🔨 CI - Build & Test
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - release/*
+      - main
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: "pr-ci-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🎯 Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: 🔄 Restore Dependencies
+        run: |
+          echo "🔄 Restoring NuGet packages..."
+          dotnet restore
+
+      - name: 🏗️ Build Application
+        run: |
+          echo "🏗️ Building application..."
+          dotnet build --configuration Release --no-restore
+
+      - name: 🧪 Run Tests
+        run: |
+          echo "🧪 Running unit tests..."
+          dotnet test --configuration Release --no-build --verbosity minimal
+
+      - name: ✅ CI Summary
+        run: |
+          echo "✅ CI Pipeline completed successfully!"
+          echo "📋 Summary:"
+          echo "  • Build: ✅ Success"
+          echo "  • Tests: ✅ All Passed"
+          echo "  • Ready for deployment"
