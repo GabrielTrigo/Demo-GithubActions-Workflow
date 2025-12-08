@@ -1,61 +1,59 @@
-name: 🏭 Deploy PRODUÇÃO
+name: Deploy PRODUÇÃO
 
 on:
   push:
     tags: ["v*.*.*"]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Tag para deploy (ex: v1.0.0)"
+        required: true
+        type: string
 
 concurrency:
   group: "deploy-prod-${{ github.ref }}"
   cancel-in-progress: true
 
 jobs:
-  deploy-prod:
+  build:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && startsWith(github.ref, 'refs/tags/')
-    environment: prod
-    steps:
-      - name: 📥 Checkout
-        uses: actions/checkout@v4
+    outputs:
+      version: ${{ steps.tag.outputs.version }}
 
-      - name: 🏷️ Get Tag Info
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Get Tag
         id: tag
         run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          VERSION=${TAG#v}
-          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
 
-      - name: 🎯 Setup .NET
-        uses: actions/setup-dotnet@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "8.0.x"
 
-      - name: 🏗️ Build & Publish
-        run: |
-          dotnet restore ./src/Api/Api.csproj
-          dotnet build ./src/Api/Api.csproj --configuration Release --no-restore
-          dotnet test ./src/Api/Api.csproj --configuration Release --no-build
-          dotnet publish ./src/Api/Api.csproj --configuration Release --output ./publish --no-build
+      - run: dotnet restore ./src/Api/Api.csproj
+      - run: dotnet build ./src/Api/Api.csproj --configuration Release
+      - run: dotnet test ./src/Api/Api.csproj --configuration Release
+      - run: dotnet publish ./src/Api/Api.csproj --configuration Release --output ./publish
 
-      - name: 🏭 Deploy to PRODUCTION
-        env:
-          PROD_SERVER: "secrets.PROD_SERVER"
-        run: |
-          echo "🏭 DEPLOYING TO PRODUCTION..."
-          echo "🏷️ Tag: ${{ steps.tag.outputs.tag }}"
-          echo "📋 Version: ${{ steps.tag.outputs.version }}"
-          echo "🌐 Server: ${{ env.PROD_SERVER }}"
-          echo "👤 Authorized by: ${{ github.actor }}"
-          echo "⏰ Time: $(date)"
+      - uses: actions/upload-artifact@v5
+        with:
+          name: build
+          path: ./publish/
 
-          # Simular deploy de produção
-          echo "🛑 Stopping services..."
-          sleep 2
-          echo "📤 Uploading new version..."
-          sleep 3
-          echo "🌐 Starting services..."
-          sleep 2
+  deploy-prod:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: prod
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: build
+          path: ./publish/
 
-          echo "✅ Deploy executado com sucesso para PRODUÇÃO"
-          echo "🎉 Version ${{ steps.tag.outputs.version }} is LIVE!"
+      - run: |
+          echo "✅ DEPLOY DE ${{ needs.build.outputs.version }} APROVADO E EXECUTADO"
