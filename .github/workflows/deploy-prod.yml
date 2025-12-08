@@ -1,4 +1,4 @@
-name: Deploy PRODUÇÃO
+name: Deploy Prod
 
 on:
   push:
@@ -56,4 +56,17 @@ jobs:
           path: ./publish/
 
       - run: |
-          echo "✅ DEPLOY DE ${{ needs.build.outputs.version }} APROVADO E EXECUTADO"
+          echo "🏭 DEPLOYING TO PRODUCTION..."
+          echo "👤 Authorized by: ${{ github.actor }}"
+          echo "⏰ Time: $(date)"
+
+          # Simular deploy de produção
+          echo "🛑 Stopping services..."
+          sleep 2
+          echo "📤 Uploading new version..."
+          sleep 3
+          echo "🌐 Starting services..."
+          sleep 2
+
+          echo "✅ Deploy executado com sucesso para PRODUÇÃO"
+          echo "🎉 Version ${{ needs.build.outputs.version }} is LIVE!"
