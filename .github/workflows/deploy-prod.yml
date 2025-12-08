@@ -12,7 +12,7 @@ concurrency:
 jobs:
   deploy-prod:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/')
     environment: prod
     steps:
       - name: 📥 Checkout
