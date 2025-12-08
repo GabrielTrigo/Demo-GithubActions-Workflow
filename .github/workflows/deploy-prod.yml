@@ -47,8 +47,7 @@ jobs:
   deploy-prod:
     needs: build
     runs-on: ubuntu-latest
-    environment:
-      name: prod
+    environment: prod
     steps:
       - uses: actions/download-artifact@v5
         with:
