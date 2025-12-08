@@ -39,6 +39,13 @@ jobs:
           echo "🧪 Running unit tests..."
           dotnet test ./src/Api/Api.csproj --configuration Release --no-build --verbosity minimal
 
+      - name: CodeQL Security Scan
+        uses: github/codeql-action/init@v4
+        with:
+          languages: csharp
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+
       - name: ✅ CI Summary
         run: |
           echo "✅ CI Pipeline completed successfully!"
