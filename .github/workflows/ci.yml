@@ -1,12 +1,11 @@
-name: 🔨 CI - Build & Test
+name: CI - Build & Test
 
 on:
   pull_request:
-    branches:
-      - develop
-      - release/*
-      - main
+    branches: ["dev", "main", "release/*"]
     types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: ["dev", "main", "release/*"]
 
 concurrency:
   group: "pr-ci-${{ github.ref }}"
@@ -28,17 +27,17 @@ jobs:
       - name: 🔄 Restore Dependencies
         run: |
           echo "🔄 Restoring NuGet packages..."
-          dotnet restore
+          dotnet restore ./src/Api/Api.csproj
 
       - name: 🏗️ Build Application
         run: |
           echo "🏗️ Building application..."
-          dotnet build --configuration Release --no-restore
+          dotnet build ./src/Api/Api.csproj --configuration Release --no-restore
 
       - name: 🧪 Run Tests
         run: |
           echo "🧪 Running unit tests..."
-          dotnet test --configuration Release --no-build --verbosity minimal
+          dotnet test ./src/Api/Api.csproj --configuration Release --no-build --verbosity minimal
 
       - name: ✅ CI Summary
         run: |
