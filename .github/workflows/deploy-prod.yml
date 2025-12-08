@@ -3,6 +3,12 @@ name: Deploy PRODUÇÃO
 on:
   push:
     tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Tag para deploy (ex: v1.0.0)"
+        required: true
+        type: string
 
 concurrency:
   group: "deploy-prod-${{ github.ref }}"
