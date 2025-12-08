@@ -1,4 +1,4 @@
-name: 🧪 Deploy HOMOLOG
+name: Deploy HOMOLOG
 
 on:
   push:
